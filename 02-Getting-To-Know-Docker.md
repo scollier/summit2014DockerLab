@@ -9,7 +9,7 @@ All actions in this lab will performed by the user *joe*
 
 Are we secure?
 
-    sestatus
+    getenforce
 
 Is there any documentation?
 
@@ -42,6 +42,13 @@ What's my hostname?
 What processes are running?
 
     ps aux
+    
+Is SELinux running?
+    getenforce
+
+        
+What is the label of the processes
+    ps -Z
     
 ##**1.2 Saving Content**
 
