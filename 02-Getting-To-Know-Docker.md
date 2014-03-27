@@ -109,6 +109,10 @@ How do I get the IP address of a running container? Grab the *UUID* of a running
 That's to hard, let's add a filter.
 
     docker inspect --format '{{ .NetworkSettings.IPAddress }}' *UUID*
+    
+Put in a docker stop
+put in a docker start
+show how to create a systemd unit file for a container
 
     
 **Lab 1 Complete!**
