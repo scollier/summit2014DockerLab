@@ -111,7 +111,41 @@ That's to hard, let's add a filter.
     docker inspect --format '{{ .NetworkSettings.IPAddress }}' *UUID*
     
 Put in a docker stop
-put in a docker start
+
+Stop the container
+
+    docker stop *UUID*
+    docker ps
+    docker ps -a
+    
+Start the container back up
+
+    docker start *UUID*
+    docker ps
+    
+
+##**1.4 Where are my logs?**
+
+Run the image
+
+    docker run -v /dev/log:/dev/log -i -t rhel7 bash
+
+Generate a message and exit
+
+    logger "This is a log from Summit"
+    exit
+    
+Check the logs on the host
+
+    journalctl | grep -i "This is a log from Summit"
+    
+
+
+
+
+##**1.5 Make it happen on boot**
+
+
 show how to create a systemd unit file for a container
 
     
