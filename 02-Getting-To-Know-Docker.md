@@ -124,7 +124,7 @@ The root filesystem for the container is in the devicemapper directory.  Grab th
 How do I get the IP address of a running container? Grab the \<Container ID> of a running container.
 
     docker ps
-    docker inspect *UUID*
+    docker inspect <Container ID>
     
 That is quite a lot of output, let's add a filter.  Replace \<Container ID> with the output of *docker ps*.
 
@@ -151,7 +151,12 @@ The containers do not run syslog.  In order to get logs from the container, ther
     file /dev/log
     docker run -v /dev/log:/dev/log -i -t rhel7 bash
 
-Generate a message with *logger* and exit the container.  This should write the message to the host journal.
+Now that the container is running.  Open another terminal and inspect the bind mount.
+
+    docker ps -l
+    docker inspect --format '{{.Volumes}}' <Container ID>
+
+Go back to the original terminal. Generate a message with *logger* and exit the container.  This should write the message to the host journal.
 
     logger "This is a log from Summit"
     exit
