@@ -1,4 +1,4 @@
-#**Overview of Docker on RHEL lab**
+#**Overview of Docker on Red Hat Enterprise Linux lab**
 
 ##**1.1 Overview of Docker on Red Hat Enterprise Linux**
 
