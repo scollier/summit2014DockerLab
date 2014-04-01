@@ -151,7 +151,135 @@ The container should be running at this time.
 ##**2.2 Mediawiki**
 This section shows how to launch the *Mediawiki* container and link back to the *MariaDB* container.
 
-##**2.2.1 Launch the Mediawiki Container**
+##**2.2.1 Review the Mediawiki Environment**
+
+
+**Reveiw the Dockerfile**
+
+
+    # cat Dockerfile 
+    FROM scollier/apache
+    MAINTAINER Stephen Tweedie <sct@redhat.com>
+    
+    # Basic RPM install...
+    RUN yum -y update
+    
+    # Install:
+    #  Mediawiki, obviously
+    #  php, because mediawiki doesn't by itself install php into apache
+    #  php-mysqlnd: this image will be configured to run against the 
+    #               Fedora-Dockerfiles mariadb image so we need the mysqld
+    #               client support for php
+    RUN yum -y install mediawiki php php-mysqlnd
+    
+    # Now wiki data.  We'll expose the wiki at $host/wiki, so the html root will be
+    # at /var/www/html/wiki; to allow this to be used as a data volume we keep the
+    # initialisation in a separate script.
+    
+    ADD config.sh /config.sh
+    RUN chmod +x /config.sh
+    RUN /config.sh
+    
+    # localhost:/wiki/mw-config should now be available to configure mediawiki.
+    
+    # Add script to update the IP address of a linked mariadb container if
+    # needed:
+    
+    ADD run-mw.sh /run-mw.sh
+    RUN chmod +x /run-mw.sh
+    CMD ["/run-mw.sh"]
+
+
+
+
+
+
+
+
+**Reveiw the config.sh script**
+
+
+
+
+    # cat config.sh 
+    #!/bin/bash
+    #
+    # The mediawiki rpm installs into /var/www/wiki.  We need to symlink this into
+    # the served /var/www/html/ tree to make them visible.
+    #
+    # Standard config will put these in /var/www/html/wiki (ie. visible at
+    # http://$HOSTNAME/wiki )
+    
+    mkdir -p /var/www/html/wiki
+    
+    cd /var/www/html/wiki
+    ln -sf ../../wiki/* .
+    
+    # We want /var/www/html/wiki to be usable as a data volume, so it's
+    # important that persistent data lives here, not in /var/www/wiki.
+    
+    chmod 711 .
+    rm -f images
+    mkdir images
+    chown apache.apache images
+
+
+
+
+
+**Reveiw the run-mw.sh script**
+
+
+
+
+    # cat run-mw.sh 
+    #!/bin/bash
+    #
+    # Run mediawiki in a docker container environment.
+    
+    function edit_in_place () {
+        tmp=`mktemp`
+        sed -e "$2" < "$1" > $tmp
+        cat $tmp > "$1"
+        rm $tmp
+    }
+    
+    # If we are talking to a mariadb/mysql instance in a linked container
+    # (aliased "db" on port 3306), then we need to dynamically update the
+    # MW config to refer to the correct DB server IP address.
+    #
+    # Docker will set the DB_PORT_3306_TCP_ADDR env variable to the right
+    # IP in this case.
+    #
+    # We'll update lines like
+    #   $wgDBserver = "localhost";
+    # to point to the correct location.
+    
+    if [ "x$DB_PORT_3306_TCP_ADDR" != "x" ] ; then
+        # For initial configuration, it's also considerate to update the
+        # default settings that drive the config screen defaults
+        edit_in_place /usr/share/mediawiki/includes/DefaultSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+    
+        # Only update LocalSettings if they already exist; on initial
+        # setup they will not yet be here
+        if [ -f /var/www/html/wiki/LocalSettings.php ] ; then
+    	edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+        fi
+    fi
+    
+    # Finally fall through to the apache startup script that the apache
+    # Dockerfile (which we build on top of here) sets up
+    exec /run-apache.sh
+
+
+
+
+
+
+**Reveiw the start.sh script**
+
+
+##**2.2.2 Launch the Mediawiki Container**
 
 This section show's how to use hostnames and link to an existing container.
 
