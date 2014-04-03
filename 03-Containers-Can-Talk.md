@@ -125,6 +125,8 @@ Or open another terminal and watch for AVCs in the foreground:
 
 
     tail -f /var/log/audit/audit.log | grep -i avc
+    
+Launch the container
 
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
 
@@ -141,6 +143,9 @@ Now launch the container again.  First the container will have to be removed bec
 
     docker ps -a
     docker stop <Container UID> && docker rm <Container UID>
+
+Launch the container again.    
+
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
     docker ps -l
 
@@ -152,6 +157,8 @@ The container should be running at this time.
 This section shows how to launch the *Mediawiki* container and link back to the *MariaDB* container.
 
 ##**2.2.1 Review the Mediawiki Environment**
+
+Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.
 
 
 **Reveiw the Dockerfile**
@@ -281,30 +288,89 @@ This section shows how to launch the *Mediawiki* container and link back to the 
 
 ##**2.2.2 Launch the Mediawiki Container**
 
-This section show's how to use hostnames and link to an existing container.
+This section show's how to use hostnames and link to an existing container.  Issue the *docker run* command and link to the *mariadb* container.
+
+**Inspect Environment variables**
+
+Run the container in interactive mode to take a look at the environment variables.
+
+    docker run -i -t --link mariadb:db -v /var/www/html/ -p 80:80 -name mediawiki_env summit/mediawiki bash
+
+Once inside the container, print the envirnment variable
+
+    env | grep DB
+    
+The variables should be similar to: 
+
+    DB_NAME=/mediawiki/db
+    DB_PORT=tcp://172.17.0.2:3306
+    DB_PORT_3306_TCP_PORT=3306
+    DB_PORT_3306_TCP_PROTO=tcp
+    DB_PORT_3306_TCP_ADDR=172.17.0.2
+    DB_PORT_3306_TCP=tcp://172.17.0.2:3306
+
+This is how the linking works.  You can substitute values in your configuration files with these variables to do service discovery.  In our case, we need access to the MariaDB database and you can see that both the IP addrss of the MariaDB container and the port is listed.
+
+Exit the container
+
+    exit
+    
+Now launch the container in daemon mode for the remainder of the configuration. Notice how the options for *docker run* have changed.
 
     docker run -d --link mariadb:db \
     -v /var/www/html/ -p 80:80 -name mediawiki summit/mediawiki
     
+Check out the link that was made.
+
+    docker ps
+    
+Notice in the *NAMES* column how the link is represented.
+
 Inspect the container and get volume information:
+
+    docker ps
 
     docker inspect --format '{{ .Volumes }}' <Container ID>
     
     ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
     
-Run the *Mediawiki* configuration
+Run the *Mediawiki* wizard and complete the configuration.
 
-1. Open browser
-2. http://localhost/wiki
-3. wizard...
-4. ...
-5. Once finished, copy the *LocalSettings.php* file that was downloaded to the bind mounted volume.
+Open browser
 
-    cp LocalSettings.php /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
+    firefox &
+
+Go to the *Mediawiki* configuration page.
+
+    http://localhost/wiki    
+
+Initiate the wizard by clicking *set up the wiki first*.
+
+On the *Language* screen, click *Continue*
+
+On the *Welcome to Mediawiki* screen, click *Continue*
+
+On the *Connect to Database* screen, provide the *Database host* and enter the IP address of the MariaDB container.  Recall that you can get that with *Docker inspect*.  Then provide the *Username* and *Database Password* of *root* and *mysqlPassword* respectively. Click Continue.  Recall, those were set by a script during the Docker build process.
+
+On the *Database Settings* screen, click *Continue*
+
+On the *Name* screen, provide a name for the wiki.  Perhaps, *Summit* ?  Provide *Administrator* account values: 
+
+Name: Admin 
+Password: summit
+Email Addresss: admin@summit.local
+
+Click *Continue*
+
+On the *Options* screen, click *Continue*
+
+Save the *LocalSettings.php* file to your home directory. Copy the *LocalSettings.php* file that was downloaded to the bind mounted volume.  Recall that you can get the *Container UUID* with *docker inspect* of the Mediawiki container.
+
+    cp LocalSettings.php /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/wiki
     
-6. Complete the install by entering the wiki.
+6. Complete the install by entering the wiki.  Go back to the browser and click *Enter your wiki* on the *Complete* page.
 
-
+Thats it.
     
 **Lab 2 Complete!**
 
