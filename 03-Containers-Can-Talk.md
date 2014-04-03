@@ -279,13 +279,6 @@ Review the scripts and other content that are required to build and launch the *
     exec /run-apache.sh
 
 
-
-
-
-
-**Reveiw the start.sh script**
-
-
 ##**2.2.2 Launch the Mediawiki Container**
 
 This section show's how to use hostnames and link to an existing container.  Issue the *docker run* command and link to the *mariadb* container.
@@ -340,37 +333,28 @@ Open browser
 
     firefox &
 
-Go to the *Mediawiki* configuration page.
+Go to the *Mediawiki* home page.
 
     http://localhost/wiki    
 
-Initiate the wizard by clicking *set up the wiki first*.
+Thats it.  Now you can start using your wiki.  
 
-On the *Language* screen, click *Continue*
+Now, how did this work?  The way this works is that the Dockerfile *CMD* command tells the container to launch with the *run-mw.sh* script.  Here's the key thing about what that script is doing, let's review:
 
-On the *Welcome to Mediawiki* screen, click *Continue*
-
-On the *Connect to Database* screen, provide the *Database host* and enter the IP address of the MariaDB container.  Recall that you can get that with *Docker inspect*.  Then provide the *Username* and *Database Password* of *root* and *mysqlPassword* respectively. Click Continue.  Recall, those were set by a script during the Docker build process.
-
-On the *Database Settings* screen, click *Continue*
-
-On the *Name* screen, provide a name for the wiki.  Perhaps, *Summit* ?  Provide *Administrator* account values: 
-
-Name: Admin 
-Password: summit
-Email Addresss: admin@summit.local
-
-Click *Continue*
-
-On the *Options* screen, click *Continue*
-
-Save the *LocalSettings.php* file to your home directory. Copy the *LocalSettings.php* file that was downloaded to the bind mounted volume.  Recall that you can get the *Container UUID* with *docker inspect* of the Mediawiki container.
-
-    cp LocalSettings.php /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/wiki
+    if [ "x$DB_PORT_3306_TCP_ADDR" != "x" ] ; then
+        # For initial configuration, it's also considerate to update the
+        # default settings that drive the config screen defaults
+        edit_in_place /usr/share/mediawiki/includes/DefaultSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
     
-6. Complete the install by entering the wiki.  Go back to the browser and click *Enter your wiki* on the *Complete* page.
+        # Only update LocalSettings if they already exist; on initial
+        # setup they will not yet be here
+        if [ -f /var/www/html/wiki/LocalSettings.php ] ; then
+    	edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+        fi
+    fi
 
-Thats it.
+It's doing a check for an existing LocalSettings.php file.  We added that file during the Docker build process.  That file was copied to /var/www/html/wiki.  So, the script runs, sees that the file exists and points the *$wbDBserver* variable to the MariaDB container.  So, no matter if these containers get shut down and have new IP addresses, the Mediawiki container will always be able to find the MariaDB container because of the *link*.  That's the service discovery that's happening.
+
     
 **Lab 2 Complete!**
 
