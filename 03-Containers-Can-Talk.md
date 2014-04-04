@@ -154,7 +154,7 @@ The container should be running at this time.
 
 
 ##**2.2 Mediawiki**
-This section shows how to launch the *Mediawiki* container and link back to the *MariaDB* container.
+This section shows how to launch the *Mediawiki* container and link it back to the *MariaDB* container.
 
 ##**2.2.1 Review the Mediawiki Environment**
 
@@ -287,7 +287,7 @@ This section show's how to use hostnames and link to an existing container.  Iss
 
 Run the container in interactive mode to take a look at the environment variables.
 
-    docker run -i -t --link mariadb:db -v /var/www/html/ -p 80:80 -name mediawiki_env summit/mediawiki bash
+    docker run -i -t --link mariadb:db -v /var/www/html/ -p 80:80 --name mediawiki_env summit/mediawiki bash
 
 Once inside the container, print the envirnment variable
 
@@ -311,7 +311,7 @@ Exit the container
 Now launch the container in daemon mode for the remainder of the configuration. Notice how the options for *docker run* have changed.
 
     docker run -d --link mariadb:db \
-    -v /var/www/html/ -p 80:80 -name mediawiki summit/mediawiki
+    -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
     
 Check out the link that was made.
 

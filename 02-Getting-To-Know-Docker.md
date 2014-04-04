@@ -30,7 +30,7 @@ Docker provides the *run* option to run a image.  Check out the run options and 
 You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty
 
     docker ps -l    
-    docker logs *UUID*
+    docker logs <UUID>
     docker run -t rhel7 echo hello
 
 To run an interactive instance that you can look around in, pass the options *-i* and *-t*. The *-i* option starts an interactive terminal.  The *-t* option allocates a pseudo-tty. You should see different results than before.  
@@ -79,7 +79,7 @@ Exit the container and commit the container.
 
     exit
     docker ps -l
-    docker commit *Container ID* file2/container
+    docker commit <Container ID> file2/container
     ae4b621fc73d0a66bf1e98657dee570043cb7f9910c0b96782a914fee85437f2
    
 Now lets see if it saved the file.  Now *docker images* should show the newly commited container. Launch it again and check for the file.
@@ -93,10 +93,10 @@ Now lets see if it saved the file.  Now *docker images* should show the newly co
 
 Now that we have explored what's on the inside of a container, let's see what is going on outside of the container.
 
-Let's launch a container and leave it running and confirm it is running.  The *-d* option runs the container in daemon mode.  Remember, you can always get help with the options.  Run these commands on the host, you should not be inside a container at this time.
+Let's launch a container that will run for a long time then confirm it is running.  The *-d* option runs the container in daemon mode.  Remember, you can always get help with the options.  Run these commands on the host (you should not be inside a container at this time).
 
     docker run --help
-    docker run -d rhel7
+    docker run -d rhel7 sleep 99999
     docker ps
 
 Check out the networking on the host. You should see the docker0 bridge and a *veth* interface attached.  The *veth* interface is one end of a virtual device that connects the container to the host machine. 
