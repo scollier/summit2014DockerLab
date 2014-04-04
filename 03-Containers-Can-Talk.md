@@ -2,6 +2,14 @@
 
 Now that we have the fundamentals down, let's do something a bit more interesting with these containers.  This lab will cover launching a *MariaDB* and *Mediawiki* container.  The two will be tied together via the Docker *link* functionality.  This lab will build upon things we learned in lab 1 and expand on that.  We'll be looking at external volumes, links, and additional options to the Docker *run* command.
 
+**A bit about links**
+
+Straight from the Docker.io site:
+
+"Links: service discovery for docker
+
+Links allow containers to discover and securely communicate with each other by using the flag -link name:alias  When two containers are linked together Docker creates a parent child relationship between the containers. The parent container will be able to access information via environment variables of the child such as name, exposed ports, IP and other selected environment variables."
+
 
 ##**2.1 MariaDB**
 
@@ -37,6 +45,14 @@ Look at the *Dockerfile*. From the contents below, you can see that the Dockerfi
 
 
 **Review the supervisord.conf file**
+
+Straight from the supervisord.org site:
+
+"Supervisor: A Process Control System
+
+Supervisor is a client/server system that allows its users to monitor and control a number of processes on UNIX-like operating systems."
+
+There are a couple of reasons to use *supervisord* inside a container.  The first is that Docker really only wants to be in charge of one service.  So if you are running multiple services in a POC container such as MariaDB and Apache at the same time, you need a way to manage those. Present *supervisord* as the service that runs on launch and let it control the other services in the background. Also, supervisord can run services in foreground mode.  Docker likes that.
 
 The *supervisord.conf* file instructs the *supervisord* daemon as to which processes it is responsible for.  This *supervisord.conf* file has been pared down considerably.
 

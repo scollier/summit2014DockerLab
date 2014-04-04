@@ -30,7 +30,7 @@ Docker provides the *run* option to run a image.  Check out the run options and 
 You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty
 
     docker ps -l    
-    docker logs <UUID>
+    docker logs <Container ID>
     docker run -t rhel7 echo hello
 
 To run an interactive instance that you can look around in, pass the options *-i* and *-t*. The *-i* option starts an interactive terminal.  The *-t* option allocates a pseudo-tty. You should see different results than before.  
@@ -164,6 +164,47 @@ Go back to the original terminal. Generate a message with *logger* and exit the 
 Check the logs on the host to ensure the bind mount was successful.
 
     journalctl | grep -i "This is a log from Summit"
+ 
+   
+##**1.4 Control that Service!**
+
+We can control services with systemd.  Systemd allows us to start, stop, and control which services are enabled on boot, among many other things.  In this section we will use systemd to enable the *nginx* service to start on boot.
+
+Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.
+
+    
+    [Unit]
+    Description=nginx server
+    After=docker.service
+    
+    [Service]
+    ExecStart=/usr/bin/docker run -d -t -p 80:80 summit/nginx
+    
+    [Install]
+    WantedBy=multi-user.target
+
+Now control the service.  Enable the service on reboot.
+
+    systemctl enable nginx.service
+
+Start the service.  When starting this service, make sure there are no other containers using port 80 or it will fail.
+
+    docker ps
+    systemctl start nginx.service
+    systemctl status nginx.service
+
+Stop the service.
+
+    systemctl stop nginx.service
+    systemctl status nginx.service
+
+Check to ensure the service starts on boot.
+
+    reboot
+    systemctl status nginx.service
+    
+It's that easy!
+
         
 **Lab 1 Complete!**
 
