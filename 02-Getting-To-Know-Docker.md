@@ -93,7 +93,7 @@ Now lets see if it saved the file.  Now *docker images* should show the newly co
 
 Now that we have explored what's on the inside of a container, let's see what is going on outside of the container.
 
-Let's launch a container that will run for a long time then confirm it is running.  The *-d* option runs the container in daemon mode.  Remember, you can always get help with the options.  Run these commands on the host, you should not be inside a container at this time.
+Let's launch a container that will run for a long time then confirm it is running.  The *-d* option runs the container in daemon mode.  Remember, you can always get help with the options.  Run these commands on the host (you should not be inside a container at this time).
 
     docker run --help
     docker run -d rhel7 sleep 99999
