@@ -10,6 +10,8 @@ Straight from the Docker.io site:
 
 Links allow containers to discover and securely communicate with each other by using the flag -link name:alias  When two containers are linked together Docker creates a parent child relationship between the containers. The parent container will be able to access information via environment variables of the child such as name, exposed ports, IP and other selected environment variables."
 
+**Note** <br>
+All images have been built before labtime.  If you would like to review what was used, all Dockerfiles are in */root/summit_link_demo*.
 
 ##**2.1 MariaDB**
 
@@ -142,7 +144,7 @@ Or open another terminal and watch for AVCs in the foreground:
 
     tail -f /var/log/audit/audit.log | grep -i avc
     
-Launch the container
+Launch the container.  The directory */mariadb/db* needs to be created.  That directory will be bind mounted inside the container.
 
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
 

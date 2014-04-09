@@ -10,12 +10,13 @@ Check to ensure that SELinux is running on the host.
 
     getenforce
 
-Take a look at the documetation and help that is provide by the Docker package.
+Take a look at the documetation and general help as well as command specific help that is provide by the Docker package.
 
     rpm -qd docker-io
     man docker
     man docker-run
     docker --help
+    docker run --help
 
 A Docker *image* is basically a layer.  A layer never changes.  To take a look a the images that are on this system.
 

@@ -26,8 +26,7 @@ External Logging<br>
 Saving Content <br>
 Starting containers on boot<br>
 Linking containers<br>
-Replicating MongoDB databases
-
+Dockerfiles
 
 
 
