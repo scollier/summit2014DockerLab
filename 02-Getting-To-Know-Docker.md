@@ -2,6 +2,9 @@
 
 Red Hat Enterprise Linux provides shared services for Docker. A couple of these shared services are systemd and selinux.  This lab will help to familiarize you with the common actions performed on Docker containers and images. The first part of the lab starts out on the host machine, the machine that runs all the containers.  Then we'll move on to container inspection.
 
+**Accessing the Environment:**<br>
+You will have a virtual machine running on this host.  You'll need to SSH into that virtual machine to complete the labs.  You can open *virt-manager* to get the IP Address, then SSH into it from the workstation.
+
 ##**1.1 Run an Image and Look Inside**
 
 All actions in this lab will performed by the user *root*.
@@ -31,7 +34,7 @@ Docker provides the *run* option to run a image.  Check out the run options and 
 You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty
 
     docker ps -l    
-    docker logs <Container ID>
+    docker logs <Container UUID>
     docker run -t rhel7 echo hello
 
 To run an interactive instance that you can look around in, pass the options *-i* and *-t*. The *-i* option starts an interactive terminal.  The *-t* option allocates a pseudo-tty. You should see different results than before.  
@@ -80,7 +83,7 @@ Exit the container and commit the container.
 
     exit
     docker ps -l
-    docker commit <Container ID> file2/container
+    docker commit <Container UUID> file2/container
     ae4b621fc73d0a66bf1e98657dee570043cb7f9910c0b96782a914fee85437f2
    
 Now lets see if it saved the file.  Now *docker images* should show the newly commited container. Launch it again and check for the file.
@@ -117,24 +120,24 @@ What is Docker putting on the file system?  Check */var/lib/docker* to see what 
 
     ls /var/lib/docker
     
-The root filesystem for the container is in the devicemapper directory.  Grab the *Container ID* and complete the path below.  Replace \<Container ID> with the output from *docker ps -l* and use tab completion to complete the \<Container ID>.
+The root filesystem for the container is in the devicemapper directory.  Grab the *Container ID* and complete the path below.  Replace \<Container UUID> with the output from *docker ps -l* and use tab completion to complete the \<Container UUID>.
 
     docker ps -l
     cd /var/lib/docker/devicemapper/mnt/<Container ID><tab><tab>/rootfs
     
-How do I get the IP address of a running container? Grab the \<Container ID> of a running container.
+How do I get the IP address of a running container? Grab the \<Container UUID> of a running container.
 
     docker ps
-    docker inspect <Container ID>
+    docker inspect <Container UUID>
     
 That is quite a lot of output, let's add a filter.  Replace \<Container ID> with the output of *docker ps*.
 
     docker ps
-    docker inspect --format '{{ .NetworkSettings.IPAddress }}' <Container ID>
+    docker inspect --format '{{ .NetworkSettings.IPAddress }}' <Container UUID>
     
 Stop the container and check out its status. The container will not be running anymore, so it is not visible with *docker ps*.  To see the \<Container ID> of a stopped container, use the *-a* option.  The *-a* option shows all containers, started or stopped.
 
-    docker stop <Container ID>
+    docker stop <Container UUID>
     docker ps
     docker ps -a
     
@@ -155,7 +158,7 @@ The containers do not run syslog.  In order to get logs from the container, ther
 Now that the container is running.  Open another terminal and inspect the bind mount.
 
     docker ps -l
-    docker inspect --format '{{.Volumes}}' <Container ID>
+    docker inspect --format '{{.Volumes}}' <Container UUID>
 
 Go back to the original terminal. Generate a message with *logger* and exit the container.  This should write the message to the host journal.
 
@@ -205,6 +208,14 @@ Check to ensure the service starts on boot.
     systemctl status nginx.service
     
 It's that easy!
+
+Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
+
+    docker ps | grep -i nginx
+    
+If it is running:
+
+    docker stop <Container UUID>
 
         
 **Lab 1 Complete!**

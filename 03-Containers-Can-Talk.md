@@ -85,7 +85,7 @@ The *supervisord.conf* file instructs the *supervisord* daemon as to which proce
     autorestart=true
 
 
-**Reveiw the start.sh script**
+**Review the start.sh script**
 The *start.sh* script is called by the container to start the *supervisord* daemon.  The first thing the *start.sh* script does is checks to see if the database has been created yet.  If it has, just start the container, if not, create it.  The reason for this is this container uses a shared volume.  It only needs to create the database one time.  All other times the container starts, use existing data.
 
     # cat start.sh 
@@ -160,7 +160,7 @@ You will need to allow the proper SELinux permissions on the local */mariadb/db*
 Now launch the container again.  First the container will have to be removed because of a naming conflict.
 
     docker ps -a
-    docker stop <Container UID> && docker rm <Container UID>
+    docker stop <Container UUID> && docker rm <Container UUID>
 
 Launch the container again.    
 
@@ -179,15 +179,15 @@ This section shows how to launch the *Mediawiki* container and link it back to t
 Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.
 
 
-**Reveiw the Dockerfile**
+**Review the Dockerfile**
 
 
-    # cat Dockerfile 
+    cat Dockerfile 
     FROM scollier/apache
     MAINTAINER Stephen Tweedie <sct@redhat.com>
     
     # Basic RPM install...
-    RUN yum -y update
+    RUN yum -y update; yum clean all
     
     # Install:
     #  Mediawiki, obviously
@@ -195,13 +195,16 @@ Review the scripts and other content that are required to build and launch the *
     #  php-mysqlnd: this image will be configured to run against the 
     #               Fedora-Dockerfiles mariadb image so we need the mysqld
     #               client support for php
-    RUN yum -y install mediawiki php php-mysqlnd
+    RUN yum -y install mediawiki php php-mysqlnd; yum clean all
     
     # Now wiki data.  We'll expose the wiki at $host/wiki, so the html root will be
     # at /var/www/html/wiki; to allow this to be used as a data volume we keep the
     # initialisation in a separate script.
     
-    ADD config.sh /config.sh
+    ADD ./config.sh /config.sh
+    ADD ./run-apache.sh /run-apache.sh
+    ADD ./LocalSettings.php /var/www/html/wiki/
+    RUN chmod +x /run-apache.sh
     RUN chmod +x /config.sh
     RUN /config.sh
     
@@ -216,12 +219,7 @@ Review the scripts and other content that are required to build and launch the *
 
 
 
-
-
-
-
-
-**Reveiw the config.sh script**
+**Review the config.sh script**
 
 
 
@@ -252,7 +250,7 @@ Review the scripts and other content that are required to build and launch the *
 
 
 
-**Reveiw the run-mw.sh script**
+**Review the run-mw.sh script**
 
 
 
@@ -339,13 +337,25 @@ Notice in the *NAMES* column how the link is represented.
 
 Inspect the container and get volume information:
 
-    docker ps
+    docker ps | grep -i media
+    
+Take that \<Container UUID> and use it in the next command.
 
-    docker inspect --format '{{ .Volumes }}' <Container ID>
+    docker inspect --format '{{ .Volumes }}' <Container UUID of MediaWiki Container>
+    
+Now take the output of the *docker inspect* command and use the UUID from that in the next command.
     
     ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
     
-Run the *Mediawiki* wizard and complete the configuration.
+Ensure the dynamically created directory has the proper SELinux context
+
+    chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
+    
+Run the *Mediawiki* wizard and confirm configuration is complete.
+
+Using SSH
+
+ssh -Y root@ip.of.vm
 
 Open browser
 

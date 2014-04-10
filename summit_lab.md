@@ -49,6 +49,9 @@ Dockerfiles
 
 Red Hat Enterprise Linux provides shared services for Docker. A couple of these shared services are systemd and selinux.  This lab will help to familiarize you with the common actions performed on Docker containers and images. The first part of the lab starts out on the host machine, the machine that runs all the containers.  Then we'll move on to container inspection.
 
+**Accessing the Environment:**<br>
+You will have a virtual machine running on this host.  You'll need to SSH into that virtual machine to complete the labs.  You can open *virt-manager* to get the IP Address, then SSH into it from the workstation.
+
 ##**1.1 Run an Image and Look Inside**
 
 All actions in this lab will performed by the user *root*.
@@ -78,7 +81,7 @@ Docker provides the *run* option to run a image.  Check out the run options and 
 You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty
 
     docker ps -l    
-    docker logs <Container ID>
+    docker logs <Container UUID>
     docker run -t rhel7 echo hello
 
 To run an interactive instance that you can look around in, pass the options *-i* and *-t*. The *-i* option starts an interactive terminal.  The *-t* option allocates a pseudo-tty. You should see different results than before.  
@@ -127,7 +130,7 @@ Exit the container and commit the container.
 
     exit
     docker ps -l
-    docker commit <Container ID> file2/container
+    docker commit <Container UUID> file2/container
     ae4b621fc73d0a66bf1e98657dee570043cb7f9910c0b96782a914fee85437f2
    
 Now lets see if it saved the file.  Now *docker images* should show the newly commited container. Launch it again and check for the file.
@@ -164,24 +167,24 @@ What is Docker putting on the file system?  Check */var/lib/docker* to see what 
 
     ls /var/lib/docker
     
-The root filesystem for the container is in the devicemapper directory.  Grab the *Container ID* and complete the path below.  Replace \<Container ID> with the output from *docker ps -l* and use tab completion to complete the \<Container ID>.
+The root filesystem for the container is in the devicemapper directory.  Grab the *Container ID* and complete the path below.  Replace \<Container UUID> with the output from *docker ps -l* and use tab completion to complete the \<Container UUID>.
 
     docker ps -l
     cd /var/lib/docker/devicemapper/mnt/<Container ID><tab><tab>/rootfs
     
-How do I get the IP address of a running container? Grab the \<Container ID> of a running container.
+How do I get the IP address of a running container? Grab the \<Container UUID> of a running container.
 
     docker ps
-    docker inspect <Container ID>
+    docker inspect <Container UUID>
     
 That is quite a lot of output, let's add a filter.  Replace \<Container ID> with the output of *docker ps*.
 
     docker ps
-    docker inspect --format '{{ .NetworkSettings.IPAddress }}' <Container ID>
+    docker inspect --format '{{ .NetworkSettings.IPAddress }}' <Container UUID>
     
 Stop the container and check out its status. The container will not be running anymore, so it is not visible with *docker ps*.  To see the \<Container ID> of a stopped container, use the *-a* option.  The *-a* option shows all containers, started or stopped.
 
-    docker stop <Container ID>
+    docker stop <Container UUID>
     docker ps
     docker ps -a
     
@@ -202,7 +205,7 @@ The containers do not run syslog.  In order to get logs from the container, ther
 Now that the container is running.  Open another terminal and inspect the bind mount.
 
     docker ps -l
-    docker inspect --format '{{.Volumes}}' <Container ID>
+    docker inspect --format '{{.Volumes}}' <Container UUID>
 
 Go back to the original terminal. Generate a message with *logger* and exit the container.  This should write the message to the host journal.
 
@@ -252,6 +255,14 @@ Check to ensure the service starts on boot.
     systemctl status nginx.service
     
 It's that easy!
+
+Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
+
+    docker ps | grep -i nginx
+    
+If it is running:
+
+    docker stop <Container UUID>
 
         
 **Lab 1 Complete!**
@@ -345,7 +356,7 @@ The *supervisord.conf* file instructs the *supervisord* daemon as to which proce
     autorestart=true
 
 
-**Reveiw the start.sh script**
+**Review the start.sh script**
 The *start.sh* script is called by the container to start the *supervisord* daemon.  The first thing the *start.sh* script does is checks to see if the database has been created yet.  If it has, just start the container, if not, create it.  The reason for this is this container uses a shared volume.  It only needs to create the database one time.  All other times the container starts, use existing data.
 
     # cat start.sh 
@@ -420,7 +431,7 @@ You will need to allow the proper SELinux permissions on the local */mariadb/db*
 Now launch the container again.  First the container will have to be removed because of a naming conflict.
 
     docker ps -a
-    docker stop <Container UID> && docker rm <Container UID>
+    docker stop <Container UUID> && docker rm <Container UUID>
 
 Launch the container again.    
 
@@ -439,15 +450,15 @@ This section shows how to launch the *Mediawiki* container and link it back to t
 Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.
 
 
-**Reveiw the Dockerfile**
+**Review the Dockerfile**
 
 
-    # cat Dockerfile 
+    cat Dockerfile 
     FROM scollier/apache
     MAINTAINER Stephen Tweedie <sct@redhat.com>
     
     # Basic RPM install...
-    RUN yum -y update
+    RUN yum -y update; yum clean all
     
     # Install:
     #  Mediawiki, obviously
@@ -455,13 +466,16 @@ Review the scripts and other content that are required to build and launch the *
     #  php-mysqlnd: this image will be configured to run against the 
     #               Fedora-Dockerfiles mariadb image so we need the mysqld
     #               client support for php
-    RUN yum -y install mediawiki php php-mysqlnd
+    RUN yum -y install mediawiki php php-mysqlnd; yum clean all
     
     # Now wiki data.  We'll expose the wiki at $host/wiki, so the html root will be
     # at /var/www/html/wiki; to allow this to be used as a data volume we keep the
     # initialisation in a separate script.
     
-    ADD config.sh /config.sh
+    ADD ./config.sh /config.sh
+    ADD ./run-apache.sh /run-apache.sh
+    ADD ./LocalSettings.php /var/www/html/wiki/
+    RUN chmod +x /run-apache.sh
     RUN chmod +x /config.sh
     RUN /config.sh
     
@@ -476,12 +490,7 @@ Review the scripts and other content that are required to build and launch the *
 
 
 
-
-
-
-
-
-**Reveiw the config.sh script**
+**Review the config.sh script**
 
 
 
@@ -512,7 +521,7 @@ Review the scripts and other content that are required to build and launch the *
 
 
 
-**Reveiw the run-mw.sh script**
+**Review the run-mw.sh script**
 
 
 
@@ -599,13 +608,25 @@ Notice in the *NAMES* column how the link is represented.
 
 Inspect the container and get volume information:
 
-    docker ps
+    docker ps | grep -i media
+    
+Take that \<Container UUID> and use it in the next command.
 
-    docker inspect --format '{{ .Volumes }}' <Container ID>
+    docker inspect --format '{{ .Volumes }}' <Container UUID of MediaWiki Container>
+    
+Now take the output of the *docker inspect* command and use the UUID from that in the next command.
     
     ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
     
-Run the *Mediawiki* wizard and complete the configuration.
+Ensure the dynamically created directory has the proper SELinux context
+
+    chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
+    
+Run the *Mediawiki* wizard and confirm configuration is complete.
+
+Using SSH
+
+ssh -Y root@ip.of.vm
 
 Open browser
 
@@ -652,6 +673,7 @@ On a Fedora host
 
 Project Atomic site:
 
+TBD
 
 
 **End of Chapter 4**
