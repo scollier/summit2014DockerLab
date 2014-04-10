@@ -112,6 +112,7 @@ Now that we have an idea of what's going on inside the container, let's take a l
 Create a file inside the container and see if it persists the next time you run the container.
 
     echo "Hello World" >> ~/file1
+    ls ~/
     
 Exit the container.
 
@@ -147,10 +148,13 @@ Now that we have explored what's on the inside of a container, let's see what is
 Let's launch a container that will run for a long time then confirm it is running.  The *-d* option runs the container in daemon mode.  Remember, you can always get help with the options.  Run these commands on the host (you should not be inside a container at this time).
 
     docker run --help
-    docker run -d rhel7 sleep 99999
+    docker run -d rhel7 sleep 999999
+
+List the images that are currently running on the system.    
+
     docker ps
 
-Check out the networking on the host. You should see the docker0 bridge and a *veth* interface attached.  The *veth* interface is one end of a virtual device that connects the container to the host machine. 
+Now, check out the networking on the host. You should see the docker0 bridge and a *veth* interface attached.  The *veth* interface is one end of a virtual device that connects the container to the host machine. 
 
     brctl show
     
@@ -202,7 +206,7 @@ The containers do not run syslog.  In order to get logs from the container, ther
     file /dev/log
     docker run -v /dev/log:/dev/log -i -t rhel7 bash
 
-Now that the container is running.  Open another terminal and inspect the bind mount.
+Now that the container is running.  Open another terminal and inspect the bind mount.  Do not run this inside the container.
 
     docker ps -l
     docker inspect --format '{{.Volumes}}' <Container UUID>
@@ -217,9 +221,15 @@ Check the logs on the host to ensure the bind mount was successful.
     journalctl | grep -i "This is a log from Summit"
  
    
-##**1.4 Control that Service!**
+##**1.5 Control that Service!**
 
 We can control services with systemd.  Systemd allows us to start, stop, and control which services are enabled on boot, among many other things.  In this section we will use systemd to enable the *nginx* service to start on boot.
+
+Have a look at the docker images.
+
+    docker images
+
+You will notice a repository called *summit/nginx*, that is what will be used in this section. 
 
 Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.
 
@@ -237,22 +247,12 @@ Here is the systemd unit file that needs to be created in order for this to work
 Now control the service.  Enable the service on reboot.
 
     systemctl enable nginx.service
+    systemctl is-enabled nginx.service
 
 Start the service.  When starting this service, make sure there are no other containers using port 80 or it will fail.
 
     docker ps
     systemctl start nginx.service
-    systemctl status nginx.service
-
-Stop the service.
-
-    systemctl stop nginx.service
-    systemctl status nginx.service
-
-Check to ensure the service starts on boot.
-
-    reboot
-    systemctl status nginx.service
     
 It's that easy!
 
@@ -262,7 +262,7 @@ Before moving to the next lab, ensure that *nginx* is stopped, or else there wil
     
 If it is running:
 
-    docker stop <Container UUID>
+    docker stop nginx
 
         
 **Lab 1 Complete!**
@@ -447,7 +447,7 @@ This section shows how to launch the *Mediawiki* container and link it back to t
 
 ##**2.2.1 Review the Mediawiki Environment**
 
-Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.
+Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.  The files are pasted here, but they are also in */root/summit_link_demo*
 
 
 **Review the Dockerfile**
@@ -623,10 +623,6 @@ Ensure the dynamically created directory has the proper SELinux context
     chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
     
 Run the *Mediawiki* wizard and confirm configuration is complete.
-
-Using SSH
-
-ssh -Y root@ip.of.vm
 
 Open browser
 
