@@ -176,7 +176,7 @@ This section shows how to launch the *Mediawiki* container and link it back to t
 
 ##**2.2.1 Review the Mediawiki Environment**
 
-Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.
+Review the scripts and other content that are required to build and launch the *Mediawiki* container and link it to the *MariaDB* container.  This lab does not require that you build the container as it has already been done to save time.  Rather, it provides the information you need to understand what the requirements of building a container like this.  The files are pasted here, but they are also in */root/summit_link_demo*
 
 
 **Review the Dockerfile**
@@ -352,10 +352,6 @@ Ensure the dynamically created directory has the proper SELinux context
     chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
     
 Run the *Mediawiki* wizard and confirm configuration is complete.
-
-Using SSH
-
-ssh -Y root@ip.of.vm
 
 Open browser
 
