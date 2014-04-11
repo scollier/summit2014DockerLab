@@ -231,7 +231,7 @@ Have a look at the docker images.
 
 You will notice a repository called *summit/nginx*, that is what will be used in this section. 
 
-Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.
+Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.  This is a trivial file that does not provide full control of the service.
 
     
     [Unit]
@@ -420,7 +420,7 @@ Launch the container.  The directory */mariadb/db* needs to be created.  That di
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
 
 
-Did the container start as expected?
+Did the container start as expected?  You should see some AVC's.
 
 You will need to allow the proper SELinux permissions on the local */mariadb/db* directory so *MariaDB* can access the directory.
 
@@ -431,7 +431,7 @@ You will need to allow the proper SELinux permissions on the local */mariadb/db*
 Now launch the container again.  First the container will have to be removed because of a naming conflict.
 
     docker ps -a
-    docker stop <Container UUID> && docker rm <Container UUID>
+    docker stop mariadb && docker rm mariadb
 
 Launch the container again.    
 
@@ -572,11 +572,39 @@ This section show's how to use hostnames and link to an existing container.  Iss
 
 **Inspect Environment variables**
 
-Run the container in interactive mode to take a look at the environment variables.
+Run the container.
 
-    docker run -i -t --link mariadb:db -v /var/www/html/ -p 80:80 --name mediawiki_env summit/mediawiki bash
+    docker run -d --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
+    
 
-Once inside the container, print the envirnment variable
+Check out the link that was made.
+
+    docker ps | grep media
+    
+Notice in the *NAMES* column no the mariadb container and how the link is represented.
+
+Inspect the container and get volume information:
+
+    docker ps | grep -i media
+    
+Inspec the volume now.
+
+    docker inspect --format '{{ .Volumes }}' mediawiki
+    
+Now take the output of the *docker inspect* command and use the UUID from that in the next command.
+    
+    ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
+    
+Ensure the dynamically created directory has the proper SELinux context
+
+    chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
+
+
+Use *nsenter* to enter the container and have a look at the environment variables.  Get the *PID*
+
+    nsenter -m -u -n -i -p -t $(docker inspect --format '{{ .State.Pid }}' mediawiki) /bin/bash
+
+Check out the environment variables.
 
     env | grep DB
     
@@ -597,30 +625,9 @@ Exit the container
     
 Now launch the container in daemon mode for the remainder of the configuration. Notice how the options for *docker run* have changed.
 
-    docker run -d --link mariadb:db \
-    -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
-    
-Check out the link that was made.
 
-    docker ps
     
-Notice in the *NAMES* column how the link is represented.
 
-Inspect the container and get volume information:
-
-    docker ps | grep -i media
-    
-Take that \<Container UUID> and use it in the next command.
-
-    docker inspect --format '{{ .Volumes }}' <Container UUID of MediaWiki Container>
-    
-Now take the output of the *docker inspect* command and use the UUID from that in the next command.
-    
-    ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
-    
-Ensure the dynamically created directory has the proper SELinux context
-
-    chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
     
 Run the *Mediawiki* wizard and confirm configuration is complete.
 

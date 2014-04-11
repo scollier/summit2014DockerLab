@@ -184,7 +184,7 @@ Have a look at the docker images.
 
 You will notice a repository called *summit/nginx*, that is what will be used in this section. 
 
-Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.
+Here is the systemd unit file that needs to be created in order for this to work.  The content below needs to be placed in the */etc/systemd/system/nginx.service* file.  This is a trivial file that does not provide full control of the service.
 
     
     [Unit]
