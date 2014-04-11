@@ -192,10 +192,12 @@ Here is the systemd unit file that needs to be created in order for this to work
     After=docker.service
     
     [Service]
-    ExecStart=/usr/bin/docker run -d -t -p 80:80 summit/nginx
+    Type=simple
+    ExecStart=/bin/bash -c '/usr/bin/docker start nginx || /usr/bin/docker run --name nginx -p 80:80 summit/nginx'
     
     [Install]
     WantedBy=multi-user.target
+
 
 Now control the service.  Enable the service on reboot.
 
@@ -206,6 +208,7 @@ Start the service.  When starting this service, make sure there are no other con
 
     docker ps
     systemctl start nginx.service
+    docker ps
     
 It's that easy!
 

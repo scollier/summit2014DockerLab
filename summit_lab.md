@@ -239,10 +239,12 @@ Here is the systemd unit file that needs to be created in order for this to work
     After=docker.service
     
     [Service]
-    ExecStart=/usr/bin/docker run -d -t -p 80:80 summit/nginx
+    Type=simple
+    ExecStart=/bin/bash -c '/usr/bin/docker start nginx || /usr/bin/docker run --name nginx -p 80:80 summit/nginx'
     
     [Install]
     WantedBy=multi-user.target
+
 
 Now control the service.  Enable the service on reboot.
 
@@ -253,6 +255,7 @@ Start the service.  When starting this service, make sure there are no other con
 
     docker ps
     systemctl start nginx.service
+    docker ps
     
 It's that easy!
 
@@ -557,9 +560,11 @@ Review the scripts and other content that are required to build and launch the *
         # Only update LocalSettings if they already exist; on initial
         # setup they will not yet be here
         if [ -f /var/www/html/wiki/LocalSettings.php ] ; then
-    	edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+            edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+            sed -i 's/^\$wgServer =.*$/\$wgServer = "http:\/\/'$HOST_IP'";/' /var/www/html/wiki/LocalSettings.php
         fi
     fi
+
     
     # Finally fall through to the apache startup script that the apache
     # Dockerfile (which we build on top of here) sets up
@@ -572,16 +577,16 @@ This section show's how to use hostnames and link to an existing container.  Iss
 
 **Inspect Environment variables**
 
-Run the container.
+Run the container.  The command below is taking the enviroment variable *HOST_IP* and will inject that into the *run-mw.sh* script when the container is launched. The *HOST_IP* is the IP address of the virtual machine that is hosting the container. This creates a dynamic configuration mechanism.
 
-    docker run -d --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
+    docker run -d -e=HOST_IP=10.16.143.125 --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
     
 
 Check out the link that was made.
 
     docker ps | grep media
     
-Notice in the *NAMES* column no the mariadb container and how the link is represented.
+Notice in the *NAMES* column on the mariadb container and how the link is represented.
 
 Inspect the container and get volume information:
 
@@ -595,51 +600,19 @@ Now take the output of the *docker inspect* command and use the UUID from that i
     
     ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
     
-Ensure the dynamically created directory has the proper SELinux context
+Take a look at the logs for the container and notice how the IP substitutions were done.  One IP address is for the MariaDB host and one IP address is the virtual machine IP address.  It's the same IP address that was passed via the *docker run* command.
 
-    chcon -Rvt svirt_sandbox_file_t /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/
+    docker logs mediawiki
 
-
-Use *nsenter* to enter the container and have a look at the environment variables.  Get the *PID*
-
-    nsenter -m -u -n -i -p -t $(docker inspect --format '{{ .State.Pid }}' mediawiki) /bin/bash
-
-Check out the environment variables.
-
-    env | grep DB
-    
-The variables should be similar to: 
-
-    DB_NAME=/mediawiki/db
-    DB_PORT=tcp://172.17.0.2:3306
-    DB_PORT_3306_TCP_PORT=3306
-    DB_PORT_3306_TCP_PROTO=tcp
-    DB_PORT_3306_TCP_ADDR=172.17.0.2
-    DB_PORT_3306_TCP=tcp://172.17.0.2:3306
-
-This is how the linking works.  You can substitute values in your configuration files with these variables to do service discovery.  In our case, we need access to the MariaDB database and you can see that both the IP addrss of the MariaDB container and the port is listed.
-
-Exit the container
-
-    exit
-    
-Now launch the container in daemon mode for the remainder of the configuration. Notice how the options for *docker run* have changed.
-
-
-    
-
-    
-Run the *Mediawiki* wizard and confirm configuration is complete.
-
-Open browser
+Open browser and confirm the configuration is complte.
 
     firefox &
 
-Go to the *Mediawiki* home page.
+Go to the *Mediawiki* home page. Use the IP address of the virtual machine you are on.  The same IP address that was passed in as the HOST_IP in the docker run command.
 
-    http://localhost/wiki    
+    http://ip.address.here/wiki    
 
-Thats it.  Now you can start using your wiki.  
+Thats it.  Now you can start using your wiki. You can click on *Create Account* in the top right and test it out. 
 
 Now, how did this work?  The way this works is that the Dockerfile *CMD* command tells the container to launch with the *run-mw.sh* script.  Here's the key thing about what that script is doing, let's review:
 
@@ -651,12 +624,11 @@ Now, how did this work?  The way this works is that the Dockerfile *CMD* command
         # Only update LocalSettings if they already exist; on initial
         # setup they will not yet be here
         if [ -f /var/www/html/wiki/LocalSettings.php ] ; then
-    	edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+            edit_in_place /var/www/html/wiki/LocalSettings.php 's/^\$wgDBserver =.*$/\$wgDBserver = "'$DB_PORT_3306_TCP_ADDR'";/'
+            sed -i 's/^\$wgServer =.*$/\$wgServer = "http:\/\/'$HOST_IP'";/' /var/www/html/wiki/LocalSettings.php
         fi
-    fi
 
-It's doing a check for an existing LocalSettings.php file.  We added that file during the Docker build process.  That file was copied to /var/www/html/wiki.  So, the script runs, sees that the file exists and points the *$wbDBserver* variable to the MariaDB container.  So, no matter if these containers get shut down and have new IP addresses, the Mediawiki container will always be able to find the MariaDB container because of the *link*.  That's the service discovery that's happening.
-
+It's doing a check for an existing LocalSettings.php file.  We added that file during the Docker build process.  That file was copied to /var/www/html/wiki.  So, the script runs, sees that the file exists and points the *$wbDBserver* variable to the MariaDB container.  So, no matter if these containers get shut down and have new IP addresses, the Mediawiki container will always be able to find the MariaDB container because of the *link*.  In addition, it's using the *-e* option to pass environment variables, in this case, $HOST_IP to the *run-mw.sh* script to complete the configuration.  
     
 **Lab 2 Complete!**
 
