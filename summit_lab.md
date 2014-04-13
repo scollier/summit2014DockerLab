@@ -252,14 +252,6 @@ Start the service.  When starting this service, make sure there are no other con
     systemctl start nginx.service
     docker ps
     
-Reboot the host and check to ensure the container started.
-
-    reboot
-    
-When the host returns check the service.
-
-    docker ps
-
 It's that easy!
 
 Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
@@ -584,6 +576,8 @@ This section show's how to use hostnames and link to an existing container.  Iss
 
 Run the container.  The command below is taking the enviroment variable *HOST_IP* and will inject that into the *run-mw.sh* script when the container is launched. The *HOST_IP* is the IP address of the virtual machine that is hosting the container.  Replace IP_OF_VIRTUAL_MACHINE with the IP address of the virtual machine running the container.
 
+    ip a
+    
     docker run -d -e=HOST_IP=IP_OF_VIRTUAL_MACHINE --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
     
 

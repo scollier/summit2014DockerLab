@@ -205,14 +205,6 @@ Start the service.  When starting this service, make sure there are no other con
     systemctl start nginx.service
     docker ps
     
-Reboot the host and check to ensure the container started.
-
-    reboot
-    
-When the host returns check the service.
-
-    docker ps
-
 It's that easy!
 
 Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
