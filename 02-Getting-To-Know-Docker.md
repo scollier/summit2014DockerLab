@@ -145,12 +145,7 @@ Stop the container and check out its status. The container will not be running a
     docker ps
     docker ps -a
     
-Start the container back up.
-
-    docker ps -a
-    docker start <Container ID>
-    docker ps
-    
+  
 
 ##**1.4 Where are my logs?**
 
@@ -210,6 +205,14 @@ Start the service.  When starting this service, make sure there are no other con
     systemctl start nginx.service
     docker ps
     
+Reboot the host and check to ensure the container started.
+
+    reboot
+    
+When the host returns check the service.
+
+    docker ps
+
 It's that easy!
 
 Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
@@ -219,6 +222,7 @@ Before moving to the next lab, ensure that *nginx* is stopped, or else there wil
 If it is running:
 
     docker stop nginx
+    systemctl disable nginx.service
 
         
 **Lab 1 Complete!**

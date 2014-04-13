@@ -192,12 +192,7 @@ Stop the container and check out its status. The container will not be running a
     docker ps
     docker ps -a
     
-Start the container back up.
-
-    docker ps -a
-    docker start <Container ID>
-    docker ps
-    
+  
 
 ##**1.4 Where are my logs?**
 
@@ -257,6 +252,14 @@ Start the service.  When starting this service, make sure there are no other con
     systemctl start nginx.service
     docker ps
     
+Reboot the host and check to ensure the container started.
+
+    reboot
+    
+When the host returns check the service.
+
+    docker ps
+
 It's that easy!
 
 Before moving to the next lab, ensure that *nginx* is stopped, or else there will be a port conflict on port 80.
@@ -266,6 +269,7 @@ Before moving to the next lab, ensure that *nginx* is stopped, or else there wil
 If it is running:
 
     docker stop nginx
+    systemctl disable nginx.service
 
         
 **Lab 1 Complete!**
@@ -418,16 +422,16 @@ Or open another terminal and watch for AVCs in the foreground:
 
     tail -f /var/log/audit/audit.log | grep -i avc
     
-Launch the container.  The directory */mariadb/db* needs to be created.  That directory will be bind mounted inside the container.
+Launch the container.  The /mariadb/db directory already exists and has database content inside.
 
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
 
 
-Did the container start as expected?  You should see some AVC's.  Look at the logs on the container.
+Did the container start as expected?  You should see some AVC's.  Look at the logs on the container and see the *permission denied* messages.
 
     docker logs mariadb
 
-You will need to allow the proper SELinux permissions on the local */mariadb/db* directory so *MariaDB* can access the directory.
+You will need to allow the proper SELinux permissions on the local */mariadb/db* directory so *MariaDB* can access the directory.  Right now it's at *default_t*, this needs to be changed per below.
 
     ls -lZd /mariadb/db
 
@@ -605,11 +609,11 @@ Take a look at the logs for the container and notice how the IP substitutions we
 
     docker logs mediawiki
 
-Open browser and confirm the configuration is complte.
+Open browser on the host running the VM and confirm the configuration is complte.
 
     firefox &
 
-Go to the *Mediawiki* home page. Use the IP address of the virtual machine you are on.  The same IP address that was passed in as the HOST_IP in the docker run command.
+Go to the *Mediawiki* home page. Use the IP address of the virtual machine.  The same IP address that was passed in as the HOST_IP in the docker run command.
 
     http://ip.address.here/wiki    
 
@@ -648,12 +652,11 @@ On a Fedora host
     yum install fedora-dockerfiles docker-io
     
 
-
 ##**3.2 More Information**
 
 Project Atomic site:
 
-TBD
+http://projectatomic.io
 
 
 **End of Chapter 4**
