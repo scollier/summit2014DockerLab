@@ -31,7 +31,7 @@ Docker provides the *run* option to run a image.  Check out the run options and 
     docker run --help
     docker run rhel7 echo hello
 
-You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty
+You won't see any return value.  Where did it go?  Check the logs.  The following commands will list the last container that ran so you can get the UUID and check the logs.  This should return the output of "echo hello".  Finally, run with the *-t* option to allocate a psuedo-tty.  Note that *-l* below is lowercase *L*.
 
     docker ps -l    
     docker logs <Container UUID>

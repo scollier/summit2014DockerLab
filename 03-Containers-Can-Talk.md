@@ -149,13 +149,15 @@ Launch the container.  The directory */mariadb/db* needs to be created.  That di
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
 
 
-Did the container start as expected?  You should see some AVC's.
+Did the container start as expected?  You should see some AVC's.  Look at the logs on the container.
+
+    docker logs mariadb
 
 You will need to allow the proper SELinux permissions on the local */mariadb/db* directory so *MariaDB* can access the directory.
 
     ls -lZd /mariadb/db
 
-    chcon -Rvt svirt_sandbox_file_t /mariadb/db
+    chcon -Rvt svirt_sandbox_file_t /mariadb/db/
 
 Now launch the container again.  First the container will have to be removed because of a naming conflict.
 
@@ -166,6 +168,7 @@ Launch the container again.
 
     docker run -d -v /mariadb/db:/var/lib/mysql -p 3306:3306 --name mariadb summit/mariadb
     docker ps -l
+    docker logs mariadb
 
 The container should be running at this time.
 
@@ -301,14 +304,12 @@ Review the scripts and other content that are required to build and launch the *
 
 This section show's how to use hostnames and link to an existing container.  Issue the *docker run* command and link to the *mariadb* container.
 
-**Inspect Environment variables**
+Run the container.  The command below is taking the enviroment variable *HOST_IP* and will inject that into the *run-mw.sh* script when the container is launched. The *HOST_IP* is the IP address of the virtual machine that is hosting the container.  Replace IP_OF_VIRTUAL_MACHINE with the IP address of the virtual machine running the container.
 
-Run the container.  The command below is taking the enviroment variable *HOST_IP* and will inject that into the *run-mw.sh* script when the container is launched. The *HOST_IP* is the IP address of the virtual machine that is hosting the container. This creates a dynamic configuration mechanism.
-
-    docker run -d -e=HOST_IP=10.16.143.125 --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
+    docker run -d -e=HOST_IP=IP_OF_VIRTUAL_MACHINE --link mariadb:db  -v /var/www/html/ -p 80:80 --name mediawiki summit/mediawiki
     
 
-Check out the link that was made.
+Explore the link that was made.
 
     docker ps | grep media
     
@@ -316,15 +317,15 @@ Notice in the *NAMES* column on the mariadb container and how the link is repres
 
 Inspect the container and get volume information:
 
-    docker ps | grep -i media
-    
-Inspec the volume now.
-
     docker inspect --format '{{ .Volumes }}' mediawiki
     
-Now take the output of the *docker inspect* command and use the UUID from that in the next command.
+Now take the output of the *docker inspect* command and use the UUID from that in the next command.  Explore the mediawiki content.  This directory is mapped to */var/www/html/wiki* inside the container.
     
-    ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>
+    ls /var/lib/docker/vfs/dir/<UUID Listed from Prior Query>/wiki
+    
+For example:
+
+    ls /var/lib/docker/vfs/dir/1c8c23c24ebaea8e00fb8639e545c662516445faee7dcd5d89882fdbf1fd638d/wiki
     
 Take a look at the logs for the container and notice how the IP substitutions were done.  One IP address is for the MariaDB host and one IP address is the virtual machine IP address.  It's the same IP address that was passed via the *docker run* command.
 
@@ -338,7 +339,11 @@ Go to the *Mediawiki* home page. Use the IP address of the virtual machine you a
 
     http://ip.address.here/wiki    
 
-Thats it.  Now you can start using your wiki. You can click on *Create Account* in the top right and test it out. 
+Thats it.  Now you can start using your wiki. You can click on *Create Account* in the top right and test it out, or log in with:
+
+Username: admin<br>
+Passwrod: redhat
+
 
 Now, how did this work?  The way this works is that the Dockerfile *CMD* command tells the container to launch with the *run-mw.sh* script.  Here's the key thing about what that script is doing, let's review:
 
