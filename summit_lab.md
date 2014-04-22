@@ -52,6 +52,10 @@ Red Hat Enterprise Linux provides shared services for Docker. A couple of these 
 **Accessing the Environment:**<br>
 You will have a virtual machine running on this host.  You'll need to SSH into that virtual machine to complete the labs.  You can open *virt-manager* to get the IP Address, then SSH into it from the workstation.
 
+**SSH Access**
+
+    ssh root@10.16.143.125
+
 ##**1.1 Run an Image and Look Inside**
 
 All actions in this lab will performed by the user *root*.
@@ -575,6 +579,10 @@ Review the scripts and other content that are required to build and launch the *
 This section show's how to use hostnames and link to an existing container.  Issue the *docker run* command and link to the *mariadb* container.
 
 Run the container.  The command below is taking the enviroment variable *HOST_IP* and will inject that into the *run-mw.sh* script when the container is launched. The *HOST_IP* is the IP address of the virtual machine that is hosting the container.  Replace IP_OF_VIRTUAL_MACHINE with the IP address of the virtual machine running the container.
+
+**Note**
+
+In the following command, after the *-e*, leave the *HOST_IP* entry.  It's used to hold the variable of the IP address of the virtual machine.
 
     ip a
     

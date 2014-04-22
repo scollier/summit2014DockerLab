@@ -5,6 +5,10 @@ Red Hat Enterprise Linux provides shared services for Docker. A couple of these 
 **Accessing the Environment:**<br>
 You will have a virtual machine running on this host.  You'll need to SSH into that virtual machine to complete the labs.  You can open *virt-manager* to get the IP Address, then SSH into it from the workstation.
 
+**SSH Access**
+
+    ssh root@10.16.143.125
+
 ##**1.1 Run an Image and Look Inside**
 
 All actions in this lab will performed by the user *root*.
