@@ -1,3 +1,8 @@
+##**Red Hat Summit 2014**
+
+
+
+
 #**Contents**#
 
 1. **Overview**
@@ -664,3 +669,9 @@ http://projectatomic.io
 **End of Chapter 4**
 
 <!--BREAK-->
+
+<br>
+
+
+Author: Scott Collier<br>
+Email: scollier@redhat.com
