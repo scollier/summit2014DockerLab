@@ -674,4 +674,5 @@ http://projectatomic.io
 
 
 Author: Scott Collier<br>
-Email: scollier@redhat.com
+Email: scollier@redhat.com<br>
+Source: https://github.com/scollier/Summit2014DockerLab/blob/master/summit_lab.md
